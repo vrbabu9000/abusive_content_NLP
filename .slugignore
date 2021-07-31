@@ -1,5 +1,6 @@
-*.ipynb
-/dataset
-/bert
-/miscellaneous
-*.md
+# Ignored Theme's Assets and Folders
+**/miscellaneous
+**/bert
+**/Notebook.ipynb
+**/.gitignore
+**/dataset
