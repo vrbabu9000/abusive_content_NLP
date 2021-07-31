@@ -17,11 +17,6 @@ from scipy.sparse import csr_matrix
 # To load saved models
 import joblib
 
-#Deep Learning Libraries - Bidirectional LSTM
-import keras
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.preprocessing.text import one_hot
-
 #Deep Learning Libraries - Pytorch BERT
 import torch
 import torch.hub
@@ -63,10 +58,10 @@ elif model_name=='Ensemble Learning':
 else :
     classifier_name = st.sidebar.selectbox(
     'Select classifier',
-    ('Bidirectional LSTM', 'BERT')
+    ('BERT',)
 )
     st.markdown(f"# {model_name} : {classifier_name}\n"
-             "We get best results using Deep-Learning techniques like BERT and LSTM. Though LSTM makes errors, it is better than the baseline ML approaches. Semantics is taken into consideration which inturn, yields good predictions. BERT performs better since it was trained by Google on a humongous dataset.")
+             "We get best results using Deep-Learning techniques like BERT and LSTM. Though LSTM makes errors, it is better than the baseline ML approaches. Semantics is taken into consideration which inturn, yields good predictions. BERT performs better since it was trained by Google on a humongous dataset. To save up space on Heroku, we ended up deploying BERT over LSTM in this app as Tensorflow took around 430Mb space for an already limited 500mb Heroku limit.")
 
 user_input = st.text_area("Enter content to check for abuse", "")
 
@@ -92,12 +87,6 @@ def load_ml(model):
     elif model == 'Voting Classifier':
         return joblib.load('deployment/ml_models/8Ensemble.sav')
 
-
-
-#Load LSTM
-@st.cache(allow_output_mutation=True)
-def load_lstm():
-    return keras.models.load_model('deployment/dl_models/lstm_tf')
 
 
 #Load BERT
@@ -152,9 +141,9 @@ def load_bert():
     global model_bert
     model_bert = BERT_Arch(bert)
     # model_bert = model_bert.to(device)
-    path = 'https://mytkm.in/api/saved_weights.pt'
-    state_dict = torch.hub.load_state_dict_from_url(path,map_location=torch.device('cpu'))
-    model_bert.load_state_dict(state_dict)
+    path = 'deployment/dl_models/saved_weights1.pt'
+    # state_dict = torch.hub.load_state_dict_from_url(path,map_location=torch.device('cpu'))
+    model_bert.load_state_dict(torch.load(path,map_location=torch.device('cpu')))
 
 
 #======>FUNCTION DEFINITIONS<======#
@@ -181,17 +170,6 @@ def predictor_ml(text,model):
     X_tfid = tfidf_transformer.fit_transform(X_count)
     X = csr_matrix((X_tfid.data, X_tfid.indices, X_tfid.indptr), shape=(X_tfid.shape[0], 10000))
     return model.predict(X)
-
-#Function to predict for Bidirectional LSTM
-def predictor_lstm(text):
-    lstm = load_lstm()
-    lstm_txt = [text]
-    voc_size=10000
-    onehot_lstm = [one_hot(words, voc_size) for words in lstm_txt]
-    sent_length = 200
-    embedding_docs = pad_sequences(onehot_lstm, padding='pre', maxlen=sent_length)
-    output = lstm.predict_classes(embedding_docs)[0][0]
-    return output
 
 #Function to preprocess for BERT
 def predictor_bert(text):
@@ -232,14 +210,9 @@ if st.button("Check for Abuse"):
             o = predictor_ml(y, load_ml(classifier_name))
         out(o)
     else:
-        if classifier_name == 'Bidirectional LSTM':
-            with st.spinner("Predicting..."):
-                o = predictor_lstm(y)
-            out(o)
-        else:
-            with st.spinner("Predicting..."):
-                o = predictor_bert(y)
-            out(o)
+        with st.spinner("Predicting..."):
+            o = predictor_bert(y)
+        out(o)
 
 
 

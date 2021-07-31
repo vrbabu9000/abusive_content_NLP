@@ -1,6 +1,6 @@
 # Ignored Theme's Assets and Folders
-**/miscellaneous
-**/bert
-**/Notebook.ipynb
-**/.gitignore
-**/dataset
+/miscellaneous
+/bert
+/Notebook.ipynb
+/.gitignore
+/dataset
