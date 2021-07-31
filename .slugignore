@@ -1,5 +1,5 @@
-Notebook.ipynb
-dataset
-bert
-miscellaneous
-README.md
+*.ipynb
+/dataset
+/bert
+/miscellaneous
+*.md
