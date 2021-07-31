@@ -68,7 +68,7 @@ user_input = st.text_area("Enter content to check for abuse", "")
 #======>LOAD PREBUILT<======#
 
 #For ML models
-@st.cache(suppress_st_warning=True)
+@st.cache(allow_output_mutation=True)
 def load_ml(model):
     if model == 'Logistic Regression':
         return joblib.load('deployment/ml_models/1gsLR.sav')
@@ -90,13 +90,13 @@ def load_ml(model):
 
 
 #Load LSTM
-st.cache(suppress_st_warning=True)
+@st.cache(allow_output_mutation=True)
 def load_lstm():
     return keras.models.load_model('deployment/dl_models/lstm_tf')
 
 
 #Load BERT
-st.cache(suppress_st_warning=True)
+@st.cache(suppress_st_warning=True)
 def load_bert():
     bert = AutoModel.from_pretrained('bert-base-uncased',from_tf=True)
     global tokenizer
