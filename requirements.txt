@@ -10,4 +10,4 @@ scipy==1.6.3
 joblib==0.17.0
 tensorflow==2.5.0
 transformers==4.8.2
-keras==2.5.0
+
