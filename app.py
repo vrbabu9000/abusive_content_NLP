@@ -19,6 +19,7 @@ import joblib
 
 #Deep Learning Libraries - Pytorch BERT
 import torch
+import tensorflow as tf
 import torch.hub
 import torch.nn as nn
 from transformers import AutoModel, BertTokenizerFast
@@ -141,9 +142,10 @@ def load_bert():
     global model_bert
     model_bert = BERT_Arch(bert)
     # model_bert = model_bert.to(device)
-    path = 'deployment/dl_models/saved_weights1.pt'
-    # state_dict = torch.hub.load_state_dict_from_url(path,map_location=torch.device('cpu'))
-    model_bert.load_state_dict(torch.load(path,map_location=torch.device('cpu')))
+    path = 'https://mytkm.in/api/saved_weights.pt'
+    state_dict = torch.hub.load_state_dict_from_url(path,map_location=torch.device('cpu'))
+    #model_bert.load_state_dict(torch.load(path,map_location=torch.device('cpu')))
+    model_bert.load_state_dict(state_dict)
 
 
 #======>FUNCTION DEFINITIONS<======#
