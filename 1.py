@@ -5,9 +5,6 @@ import streamlit as st
 import numpy as np
 import re
 
-# CSS Design
-from load_css import local_css
-local_css("style.css")
 
 # For NLP & Preprocessing
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
@@ -21,10 +18,8 @@ import joblib
 import keras
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.preprocessing.text import one_hot
-
 #Deep Learning Libraries - Pytorch BERT
 import torch
-import torch.hub
 import torch.nn as nn
 from transformers import AutoModel, BertTokenizerFast
 # specify GPU or CPU
@@ -152,9 +147,8 @@ def load_bert():
     global model_bert
     model_bert = BERT_Arch(bert)
     # model_bert = model_bert.to(device)
-    path = 'https://mytkm.in/api/saved_weights.pt'
-    state_dict = torch.hub.load_state_dict_from_url(path,map_location=torch.device('cpu'))
-    model_bert.load_state_dict(state_dict)
+    path = 'deployment/dl_models/saved_weights1.pt'
+    model_bert.load_state_dict(torch.load(path,map_location=torch.device('cpu')))
 
 
 #======>FUNCTION DEFINITIONS<======#
@@ -195,7 +189,7 @@ def predictor_lstm(text):
 
 #Function to preprocess for BERT
 def predictor_bert(text):
-    load_bert()
+    bertmodel = load_bert()
     max_seq_len = 40
     # tokenize and encode sequences in the test set1
     tokens_test = tokenizer.batch_encode_plus(
@@ -218,17 +212,16 @@ def predictor_bert(text):
 #Function to display output
 def out(a):
     if a == 0:
-        t1 = "<div> <span class='highlight blue'><span class='bold'>Non Abusive</span> </span></div>"
-        st.markdown(t1,unsafe_allow_html=True)
-    else:
-        t2 = "<div> <span class='highlight red'><span class='bold'>Abusive</span> </span></div>"
-        st.markdown(t2,unsafe_allow_html=True)
+        st.markdown('# Non Abusive')
+    else: st.markdown('# Abusive')
 
 if st.button("Check for Abuse"):
     y = cleantext(user_input)
     st.write(f"## Sentiment Score {sentiscore(y)}")
     if model_name == 'Machine Learning' or model_name == 'Ensemble Learning':
-        with st.spinner("Predicting..."):
+        o = None
+        if o is None:
+            st.spinner("Predicting...")
             o = predictor_ml(y, load_ml(classifier_name))
         out(o)
     else:
