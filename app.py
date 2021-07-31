@@ -90,7 +90,7 @@ def load_ml(model):
 
 
 #Load BERT
-@st.cache(suppress_st_warning=True)
+@st.cache(allow_output_mutation=True)
 def load_bert():
     bert = AutoModel.from_pretrained('bert-base-uncased',from_tf=True)
     global tokenizer
