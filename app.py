@@ -68,84 +68,87 @@ user_input = st.text_area("Enter content to check for abuse", "")
 #======>LOAD PREBUILT<======#
 
 #For ML models
-LR = joblib.load('deployment/ml_models/1gsLR.sav')
-LSVC = joblib.load('deployment/ml_models/2gsLSVC.sav')
-MNB = joblib.load('deployment/ml_models/3gsMNB.sav')
-RFC = joblib.load('deployment/ml_models/4gsRFC.sav')
-XGB = joblib.load('deployment/ml_models/5gsXGB.sav')
-PPT = joblib.load('deployment/ml_models/6gsPPT.sav')
-SVMC = joblib.load('deployment/ml_models/7gsSVMC.sav')
+@st.cache(suppress_st_warning=True)
+def load_ml(model):
+    if model == 'Logistic Regression':
+        return joblib.load('deployment/ml_models/1gsLR.sav')
+    elif model == 'LinearSVC':
+        return joblib.load('deployment/ml_models/2gsLSVC.sav')
+    elif model == 'Multinomial Naive Bayes':
+        return joblib.load('deployment/ml_models/3gsMNB.sav')
+    elif model == 'Random Forest':
+        return joblib.load('deployment/ml_models/4gsRFC.sav')
+    elif model == 'XGBoost':
+        return joblib.load('deployment/ml_models/5gsXGB.sav')
+    elif model == 'Perceptron':
+        return joblib.load('deployment/ml_models/6gsPPT.sav')
+    elif model == 'Support Vector Machine':
+        return joblib.load('deployment/ml_models/7gsSVMC.sav')
+    elif model == 'Voting Classifier':
+        return joblib.load('deployment/ml_models/8Ensemble.sav')
 
-#For Ensemble
-VOT = joblib.load('deployment/ml_models/8Ensemble.sav')
-#For mapping dict
-ml_dict={'Logistic Regression' : LR, 'LinearSVC': LSVC,
-         'Multinomial Naive Bayes':MNB, 'Random Forest':RFC,
-         'XGBoost': XGB,'Perceptron': PPT,
-         'Support Vector Machine': SVMC,'Voting Classifier': VOT}
+
 
 #Load LSTM
-# voc_size = 10000
-# sent_length = 200
-# embedding_vector_features = 50
-# model = Sequential()
-# model.add(Embedding(voc_size, embedding_vector_features, input_length =sent_length))
-# model.add(Bidirectional(LSTM(100)))
-# model.add(Dense(1,activation='sigmoid'))
-# model.compile(loss='binary_crossentropy', optimizer='adam',metrics=['accuracy'])
-load_lstm = keras.models.load_model('deployment/dl_models/lstm_tf')
+st.cache(suppress_st_warning=True)
+def load_lstm():
+    return keras.models.load_model('deployment/dl_models/lstm_tf')
+
 
 #Load BERT
-bert = AutoModel.from_pretrained('bert-base-uncased',from_tf=True)
-tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
-for param in bert.parameters():
-    param.requires_grad = False
-#BERT Architecture
-class BERT_Arch(nn.Module):
+st.cache(suppress_st_warning=True)
+def load_bert():
+    bert = AutoModel.from_pretrained('bert-base-uncased',from_tf=True)
+    global tokenizer
+    tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
+    for param in bert.parameters():
+        param.requires_grad = False
+    #BERT Architecture
+    class BERT_Arch(nn.Module):
 
-    def __init__(self, bert):
-        super(BERT_Arch, self).__init__()
+        def __init__(self, bert):
+            super(BERT_Arch, self).__init__()
 
-        self.bert = bert
+            self.bert = bert
 
-        # dropout layer
-        self.dropout = nn.Dropout(0.1)
+            # dropout layer
+            self.dropout = nn.Dropout(0.1)
 
-        # relu activation function
-        self.relu = nn.ReLU()
+            # relu activation function
+            self.relu = nn.ReLU()
 
-        # dense layer 1
-        self.fc1 = nn.Linear(768, 512)
+            # dense layer 1
+            self.fc1 = nn.Linear(768, 512)
 
-        # dense layer 2 (Output layer)
-        self.fc2 = nn.Linear(512, 2)
+            # dense layer 2 (Output layer)
+            self.fc2 = nn.Linear(512, 2)
 
-        # softmax activation function
-        self.softmax = nn.LogSoftmax(dim=1)
+            # softmax activation function
+            self.softmax = nn.LogSoftmax(dim=1)
 
-    # define the forward pass
-    def forward(self, sent_id, mask):
-        # pass the inputs to the model
-        _, cls_hs = self.bert(sent_id, attention_mask=mask, return_dict=False)
+        # define the forward pass
+        def forward(self, sent_id, mask):
+            # pass the inputs to the model
+            _, cls_hs = self.bert(sent_id, attention_mask=mask, return_dict=False)
 
-        x = self.fc1(cls_hs)
+            x = self.fc1(cls_hs)
 
-        x = self.relu(x)
+            x = self.relu(x)
 
-        x = self.dropout(x)
+            x = self.dropout(x)
 
-        # output layer
-        x = self.fc2(x)
+            # output layer
+            x = self.fc2(x)
 
-        # apply softmax activation
-        x = self.softmax(x)
+            # apply softmax activation
+            x = self.softmax(x)
 
-        return x
-
-model_bert = BERT_Arch(bert)
-model_bert = model_bert.to(device)
-path = 'deployment/dl_models/saved_weights1.pt'
-model_bert.load_state_dict(torch.load(path))
+            return x
+    global model_bert
+    model_bert = BERT_Arch(bert)
+    # model_bert = model_bert.to(device)
+    path = 'deployment/dl_models/saved_weights1.pt'
+    model_bert.load_state_dict(torch.load(path,map_location=torch.device('cpu')))
 
 
 #======>FUNCTION DEFINITIONS<======#
@@ -175,16 +178,18 @@ def predictor_ml(text,model):
 
 #Function to predict for Bidirectional LSTM
 def predictor_lstm(text):
+    lstm = load_lstm()
     lstm_txt = [text]
     voc_size=10000
     onehot_lstm = [one_hot(words, voc_size) for words in lstm_txt]
     sent_length = 200
     embedding_docs = pad_sequences(onehot_lstm, padding='pre', maxlen=sent_length)
-    output = load_lstm.predict_classes(embedding_docs)[0][0]
+    output = lstm.predict_classes(embedding_docs)[0][0]
     return output
 
 #Function to preprocess for BERT
 def predictor_bert(text):
+    bertmodel = load_bert()
     max_seq_len = 40
     # tokenize and encode sequences in the test set1
     tokens_test = tokenizer.batch_encode_plus(
@@ -210,20 +215,23 @@ def out(a):
         st.markdown('# Non Abusive')
     else: st.markdown('# Abusive')
 
-
-
 if st.button("Check for Abuse"):
     y = cleantext(user_input)
-    st.write(f"## Sentiment Score - {sentiscore(y)}")
+    st.write(f"## Sentiment Score {sentiscore(y)}")
     if model_name == 'Machine Learning' or model_name == 'Ensemble Learning':
-        o = predictor_ml(y,ml_dict.get(classifier_name))
+        o = None
+        if o is None:
+            st.spinner("Predicting...")
+            o = predictor_ml(y, load_ml(classifier_name))
         out(o)
     else:
         if classifier_name == 'Bidirectional LSTM':
-            o = predictor_lstm(y)
+            with st.spinner("Predicting..."):
+                o = predictor_lstm(y)
             out(o)
         else:
-            o = predictor_bert(y)
+            with st.spinner("Predicting..."):
+                o = predictor_bert(y)
             out(o)
 
 
