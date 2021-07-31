@@ -1,4 +1,6 @@
-pytorch==1.7.1+cu110
+-f https://download.pytorch.org/whl/torch_stable.html
+torch== 1.8.1+cpu
+torchvision==0.9.1+cpu
 streamlit==0.85.1
 regex==2020.10.15
 numpy==1.19.5
