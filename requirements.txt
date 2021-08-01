@@ -1,6 +1,5 @@
 -f https://download.pytorch.org/whl/torch_stable.html
 torch==1.8.1+cpu 
-tensorflow-cpu==2.2.0
 streamlit==0.85.1
 numpy==1.19.5
 nltk
