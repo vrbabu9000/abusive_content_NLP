@@ -193,11 +193,11 @@ def predictor_bert(text):
         param.requires_grad = False
     model_bert = BERT_Arch(bert)
     model_bert = model_bert.to(device)
-    #path = 'https://mytkm.in/api/saved_weights.pt'
-    path = 'deployment/dl_models/saved_weights1.pt'
-    #state_dict = torch.hub.load_state_dict_from_url(path,map_location=torch.device('cpu'))
-    model_bert.load_state_dict(torch.load(path,map_location=torch.device('cpu')))
-    #model_bert.load_state_dict(state_dict)
+    path = 'https://mytkm.in/api/saved_weights.pt'
+    #path = 'deployment/dl_models/saved_weights1.pt'
+    state_dict = torch.hub.load_state_dict_from_url(path,map_location=torch.device('cpu'))
+    #model_bert.load_state_dict(torch.load(path,map_location=torch.device('cpu')))
+    model_bert.load_state_dict(state_dict)
 
     # get predictions for test data
     with torch.no_grad():
