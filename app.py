@@ -19,10 +19,9 @@ import joblib
 
 #Deep Learning Libraries - Pytorch BERT
 import torch
-import tensorflow as tf
 import torch.hub
 import torch.nn as nn
-from transformers import AutoModel, BertTokenizerFast
+from transformers import BertTokenizerFast as BertTokenizer, BertModel
 # specify GPU or CPU
 device = torch.device("cpu")
 
@@ -66,7 +65,11 @@ else :
 
 user_input = st.text_area("Enter content to check for abuse", "")
 
+
+
 #======>LOAD PREBUILT<======#
+
+
 
 #For ML models
 @st.cache(allow_output_mutation=True)
@@ -90,65 +93,53 @@ def load_ml(model):
 
 
 
-#Load BERT
-@st.cache(allow_output_mutation=True)
-def load_bert():
-    bert = AutoModel.from_pretrained('bert-base-uncased',from_tf=True)
-    global tokenizer
-    tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
-    for param in bert.parameters():
-        param.requires_grad = False
-    #BERT Architecture
-    class BERT_Arch(nn.Module):
+#BERT Architecture
+class BERT_Arch(nn.Module):
 
-        def __init__(self, bert):
-            super(BERT_Arch, self).__init__()
+    def __init__(self, bert):
+        super(BERT_Arch, self).__init__()
 
-            self.bert = bert
+        self.bert = bert
 
-            # dropout layer
-            self.dropout = nn.Dropout(0.1)
+        # dropout layer
+        self.dropout = nn.Dropout(0.1)
 
-            # relu activation function
-            self.relu = nn.ReLU()
+        # relu activation function
+        self.relu = nn.ReLU()
 
-            # dense layer 1
-            self.fc1 = nn.Linear(768, 512)
+        # dense layer 1
+        self.fc1 = nn.Linear(768, 512)
 
-            # dense layer 2 (Output layer)
-            self.fc2 = nn.Linear(512, 2)
+        # dense layer 2 (Output layer)
+        self.fc2 = nn.Linear(512, 2)
 
-            # softmax activation function
-            self.softmax = nn.LogSoftmax(dim=1)
+        # softmax activation function
+        self.softmax = nn.LogSoftmax(dim=1)
 
-        # define the forward pass
-        def forward(self, sent_id, mask):
-            # pass the inputs to the model
-            _, cls_hs = self.bert(sent_id, attention_mask=mask, return_dict=False)
+    # define the forward pass
+    def forward(self, sent_id, mask):
+        # pass the inputs to the model
+        _, cls_hs = self.bert(sent_id, attention_mask=mask, return_dict=False)
 
-            x = self.fc1(cls_hs)
+        x = self.fc1(cls_hs)
 
-            x = self.relu(x)
+        x = self.relu(x)
 
-            x = self.dropout(x)
+        x = self.dropout(x)
 
-            # output layer
-            x = self.fc2(x)
+        # output layer
+        x = self.fc2(x)
 
-            # apply softmax activation
-            x = self.softmax(x)
+        # apply softmax activation
+        x = self.softmax(x)
 
-            return x
-    global model_bert
-    model_bert = BERT_Arch(bert)
-    # model_bert = model_bert.to(device)
-    path = 'https://mytkm.in/api/saved_weights.pt'
-    state_dict = torch.hub.load_state_dict_from_url(path,map_location=torch.device('cpu'))
-    #model_bert.load_state_dict(torch.load(path,map_location=torch.device('cpu')))
-    model_bert.load_state_dict(state_dict)
+        return x
+
 
 
 #======>FUNCTION DEFINITIONS<======#
+
+
 
 #Function to clean i/p data:
 def cleantext(text):
@@ -158,11 +149,15 @@ def cleantext(text):
     text = text.lower()
     return text
 
+
+
 #Function to get sentiment scores
 def sentiscore(text):
     sentialz = SentimentIntensityAnalyzer()
     analysis = sentialz.polarity_scores(text)
     return analysis["compound"]
+
+
 
 #Function to predict for ML and Ensemble
 def predictor_ml(text,model):
@@ -173,10 +168,13 @@ def predictor_ml(text,model):
     X = csr_matrix((X_tfid.data, X_tfid.indices, X_tfid.indptr), shape=(X_tfid.shape[0], 10000))
     return model.predict(X)
 
-#Function to preprocess for BERT
+
+
+#Function to preprocess and predict for BERT
+@st.cache(allow_output_mutation=True)
 def predictor_bert(text):
-    load_bert()
     max_seq_len = 40
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     # tokenize and encode sequences in the test set1
     tokens_test = tokenizer.batch_encode_plus(
         [text],
@@ -188,12 +186,26 @@ def predictor_bert(text):
     # for test
     test_seq1 = torch.tensor(tokens_test['input_ids'])
     test_mask1 = torch.tensor(tokens_test['attention_mask'])
+
+    #Load the model
+    bert = BertModel.from_pretrained('bert-base-uncased')
+    for param in bert.parameters():
+        param.requires_grad = False
+    model_bert = BERT_Arch(bert)
+    model_bert = model_bert.to(device)
+    #path = 'https://mytkm.in/api/saved_weights.pt'
+    path = 'deployment/dl_models/saved_weights1.pt'
+    #state_dict = torch.hub.load_state_dict_from_url(path,map_location=torch.device('cpu'))
+    model_bert.load_state_dict(torch.load(path,map_location=torch.device('cpu')))
+    #model_bert.load_state_dict(state_dict)
+
     # get predictions for test data
     with torch.no_grad():
         preds1 = model_bert(test_seq1.to(device), test_mask1.to(device))
         preds1 = preds1.detach().cpu().numpy()
         preds1 = np.argmax(preds1, axis=1)
         return preds1[0]
+
 
 #Function to display output
 def out(a):
@@ -203,6 +215,7 @@ def out(a):
     else:
         t2 = "<div> <span class='highlight red'><span class='bold'>Abusive</span> </span></div>"
         st.markdown(t2,unsafe_allow_html=True)
+
 
 if st.button("Check for Abuse"):
     y = cleantext(user_input)
