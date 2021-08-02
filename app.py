@@ -135,11 +135,26 @@ class BERT_Arch(nn.Module):
 
         return x
 
+@st.cache(allow_output_mutation=True)
+def load_bert():
+    global tokenizer
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    # Load the model
+    bert = BertModel.from_pretrained('bert-base-uncased')
+    for param in bert.parameters():
+        param.requires_grad = False
+    global model_bert
+    model_bert = BERT_Arch(bert)
+    model_bert = model_bert.to(device)
+    # path = 'https://mytkm.in/api/saved_weights.pt'
+    path = 'deployment/dl_models/saved_weights1.pt'
+    # state_dict = torch.hub.load_state_dict_from_url(path,map_location=torch.device('cpu'))
+    model_bert.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
+    # model_bert.load_state_dict(state_dict)
+    return tokenizer,model_bert
 
 
 #======>FUNCTION DEFINITIONS<======#
-
-
 
 #Function to clean i/p data:
 def cleantext(text):
@@ -158,7 +173,6 @@ def sentiscore(text):
     return analysis["compound"]
 
 
-
 #Function to predict for ML and Ensemble
 def predictor_ml(text,model):
     cv = CountVectorizer()
@@ -169,12 +183,11 @@ def predictor_ml(text,model):
     return model.predict(X)
 
 
-
 #Function to preprocess and predict for BERT
 @st.cache(allow_output_mutation=True)
 def predictor_bert(text):
-    max_seq_len = 40
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    max_seq_len = 35
+    load_bert()
     # tokenize and encode sequences in the test set1
     tokens_test = tokenizer.batch_encode_plus(
         [text],
@@ -186,19 +199,6 @@ def predictor_bert(text):
     # for test
     test_seq1 = torch.tensor(tokens_test['input_ids'])
     test_mask1 = torch.tensor(tokens_test['attention_mask'])
-
-    #Load the model
-    bert = BertModel.from_pretrained('bert-base-uncased')
-    for param in bert.parameters():
-        param.requires_grad = False
-    model_bert = BERT_Arch(bert)
-    model_bert = model_bert.to(device)
-    path = 'https://mytkm.in/api/saved_weights.pt'
-    #path = 'deployment/dl_models/saved_weights1.pt'
-    state_dict = torch.hub.load_state_dict_from_url(path,map_location=torch.device('cpu'))
-    #model_bert.load_state_dict(torch.load(path,map_location=torch.device('cpu')))
-    model_bert.load_state_dict(state_dict)
-
     # get predictions for test data
     with torch.no_grad():
         preds1 = model_bert(test_seq1.to(device), test_mask1.to(device))
