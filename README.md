@@ -29,7 +29,12 @@ The project basically classifies text input based on context as abusive or non a
 - Every step in the project is well documented in the Notebook.
 - All Baselines models and One deep Learning training was done within this dataset.
 - Pytorch model was saved in bert folder and it's saved weights were imported to our notebook.
+- The tensorflow LSTM was removed due to tensorflow dependency size in Heroku. Heroku has a 500Mb limit per deployment and tensorflow alone is 430Mb which is not feasible.
+- We tried tensorflow cpu but it exceeded the 500Mb limit as well.
+- Initially in BERT training notebook, our model was trained using the AutoModel- pretrained bert uncased module. However, it had a TF 2.0 checkpoint which would work only using tensorflow dependency. Therefore, in the deploymnet, I had removed the TF component entirely and used BertModel from BertFastTokenizer and loaded the TF 2.0 weights into it. 
 
 #### Streamlit deploymnet
 - The project was deployed using streamlit and heroku.
-- link: 
+- Heroku's storage policy makes it slow and breaks down at times. 
+- We are working on alternatives to optimize the app.
+- link: https://abusiveemailclassifier.herokuapp.com/ 
