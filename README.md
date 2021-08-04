@@ -34,8 +34,8 @@ The project basically classifies text input based on context as abusive or non a
 - Initially in BERT training notebook, our model was trained using the AutoModel- pretrained bert uncased module. However, it had a TF 2.0 checkpoint which would work only using tensorflow dependency. Therefore, in the deploymnet, I had removed the TF component entirely and used BertModel from BertFastTokenizer and loaded the TF 2.0 weights into it. 
 
 #### Streamlit deploymnet
-- The project was deployed using streamlit and heroku.
+- The project was deployed using streamlit and heroku (Initiallity, then we got streamlit.io sharing).
 - Heroku's storage policy makes it slow and breaks down at times. 
 - We are working on alternatives to optimize the app.
 - The BERT model is the most accurate. However, it takes a huge amount of time to initialize its 400Mb saved weights. Alternatives are being considered at this point as the delay time is too large (about 2 to 3 minutes per prediction). The @st.cache isn't helping much. We will work on parallelizing the python code using a new lib.
-- Link: https://abusiveemailclassifier.herokuapp.com/ 
+- Link:https://share.streamlit.io/vrbabu9000/abusive_content_nlp/app.py
