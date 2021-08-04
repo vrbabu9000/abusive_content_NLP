@@ -10,12 +10,13 @@ from load_css import local_css
 local_css("style.css")
 
 # For NLP & Preprocessing
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from sklearn.feature_extraction.text import CountVectorizer,TfidfTransformer
 from scipy.sparse import csr_matrix
 
 # To load saved models
 import joblib
+import xgboost
 
 #Deep Learning Libraries - Pytorch BERT
 import torch
