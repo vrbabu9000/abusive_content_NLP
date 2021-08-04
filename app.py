@@ -23,6 +23,8 @@ import torch
 import torch.hub
 import torch.nn as nn
 from transformers import BertTokenizerFast as BertTokenizer, BertModel
+from transformers import logging
+logging.set_verbosity_warning()
 # specify GPU or CPU
 device = torch.device("cpu")
 
@@ -62,7 +64,7 @@ else :
     ('BERT',)
 )
     st.markdown(f"# {model_name} : {classifier_name}\n"
-             "We get best results using Deep-Learning techniques like BERT and LSTM. Though LSTM makes errors, it is better than the baseline ML approaches. Semantics is taken into consideration which inturn, yields good predictions. BERT performs better since it was trained by Google on a humongous dataset. To save up space on Heroku, we ended up deploying BERT over LSTM in this app as Tensorflow took around 430Mb space for an already limited 500mb Heroku limit.")
+             "We get best results using Deep-Learning techniques like BERT and LSTM. Though LSTM makes errors, it is better than the baseline ML approaches. Semantics is taken into consideration which inturn, yields good predictions. BERT performs better since it was trained by Google on a humongous dataset. To save up space on Heroku, we ended up deploying BERT over LSTM in this app as Tensorflow took around 430Mb space.")
 
 user_input = st.text_area("Enter content to check for abuse", "")
 
